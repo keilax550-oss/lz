@@ -1,0 +1,23 @@
+[build]
+  publish   = "."
+  functions = "functions"
+
+[context.production.environment]
+  CPF_TOKEN_AMNESIA      = "4c80cd47-d9d5-4672-a301-b9b8741fc293"
+  CPF_TOKEN_SINTEGRA     = ""
+  CPF_TOKEN_APICPFBRASIL = ""
+
+[[redirects]]
+  from   = "/api/consulta.php"
+  to     = "/.netlify/functions/consulta"
+  status = 200
+
+[[redirects]]
+  from   = "/api/cpf"
+  to     = "/.netlify/functions/consulta"
+  status = 200
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
