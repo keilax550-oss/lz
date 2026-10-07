@@ -1,0 +1,8 @@
+{
+  "name": "lzbuscas",
+  "version": "1.0.0",
+  "description": "LZ Buscas - Consulta de CPF",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
