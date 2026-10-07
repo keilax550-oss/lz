@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LZ Buscas — Consulta de CPF</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0d0f1a;
+    --card:#151929;
+    --border:#1e2540;
+    --accent:#4f8ef7;
+    --accent2:#7c3aed;
+    --green:#22c55e;
+    --red:#ef4444;
+    --text:#e2e8f0;
+    --muted:#64748b;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+  /* HEADER */
+  header{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--card)}
+  .logo{font-size:1.4rem;font-weight:800;letter-spacing:-0.5px}
+  .logo span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .badge{font-size:.7rem;background:var(--accent);color:#fff;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:.5px}
+
+  /* MAIN */
+  main{flex:1;display:flex;flex-direction:column;align-items:center;padding:40px 16px}
+  .hero{text-align:center;margin-bottom:36px}
+  .hero h1{font-size:2rem;font-weight:800;margin-bottom:8px}
+  .hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{color:var(--muted);font-size:.95rem}
+
+  /* SEARCH BOX */
+  .search-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:520px;margin-bottom:28px}
+  .input-row{display:flex;gap:10px;margin-bottom:0}
+  .cpf-input{flex:1;background:#0d0f1a;border:1.5px solid var(--border);color:var(--text);padding:14px 18px;border-radius:10px;font-size:1.05rem;outline:none;transition:.2s}
+  .cpf-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,.15)}
+  .cpf-input::placeholder{color:var(--muted)}
+  .btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:14px 26px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap}
+  .btn:hover{opacity:.88;transform:translateY(-1px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+  /* RESULT */
+  .result{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:520px;display:none}
+  .result.show{display:block}
+  .result-header{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+  .result-header .avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;flex-shrink:0}
+  .result-header .name{font-size:1.15rem;font-weight:700;line-height:1.3}
+  .status-badge{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:4px}
+  .status-badge.regular{background:rgba(34,197,94,.15);color:var(--green)}
+  .status-badge.irregular{background:rgba(239,68,68,.15);color:var(--red)}
+  .status-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:480px){.fields{grid-template-columns:1fr}}
+  .field{background:#0d0f1a;border:1px solid var(--border);border-radius:10px;padding:14px}
+  .field label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:5px}
+  .field span{font-size:.95rem;font-weight:600;color:var(--text)}
+  .field.full{grid-column:1/-1}
+
+  /* LOADING */
+  .loader{display:none;flex-direction:column;align-items:center;gap:12px;padding:28px 0}
+  .loader.show{display:flex}
+  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loader p{color:var(--muted);font-size:.9rem}
+
+  /* ERROR */
+  .error-box{display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px 18px;color:var(--red);font-size:.9rem;margin-top:12px}
+  .error-box.show{display:block}
+
+  /* HISTORY */
+  .history{width:100%;max-width:520px;margin-top:10px}
+  .history h3{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px}
+  .history-list{display:flex;flex-direction:column;gap:8px}
+  .hist-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:.15s}
+  .hist-item:hover{border-color:var(--accent);background:#1a2035}
+  .hist-item .hi-name{font-size:.9rem;font-weight:600}
+  .hist-item .hi-cpf{font-size:.75rem;color:var(--muted)}
+  .hist-item .hi-time{font-size:.7rem;color:var(--muted)}
+
+  /* FOOTER */
+  footer{text-align:center;padding:20px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">LZ <span>Buscas</span></div>
+  <span class="badge">BETA</span>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Consulta de <span>CPF</span></h1>
+    <p>Dados completos em segundos — nome, mãe, nascimento e situação cadastral</p>
+  </div>
+
+  <div class="search-box">
+    <div class="input-row">
+      <input class="cpf-input" id="cpfInput" type="text" placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
+      <button class="btn" id="btnBuscar" onclick="buscar()">Buscar</button>
+    </div>
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Consultando bases de dados...</p>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-header">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <div class="name" id="rNome">—</div>
+        <span class="status-badge" id="rStatus">Regular</span>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="field">
+        <label>CPF</label>
+        <span id="rCpf">—</span>
+      </div>
+      <div class="field">
+        <label>Nascimento</label>
+        <span id="rNasc">—</span>
+      </div>
+      <div class="field">
+        <label>Sexo</label>
+        <span id="rSexo">—</span>
+      </div>
+      <div class="field">
+        <label>UF</label>
+        <span id="rUf">—</span>
+      </div>
+      <div class="field full">
+        <label>Nome da Mãe</label>
+        <span id="rMae">—</span>
+      </div>
+      <div class="field full">
+        <label>Situação Cadastral</label>
+        <span id="rSituacao">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="history" id="historySection" style="display:none">
+    <h3>Consultas recentes</h3>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</main>
+
+<footer>LZ Buscas &copy; 2025 — Consulta de dados públicos</footer>
+
+<script>
+const HISTORY_KEY = "lz_history";
+
+// Máscara CPF
+document.getElementById("cpfInput").addEventListener("input", function(e) {
+  let v = e.target.value.replace(/\D/g,"").slice(0,11);
+  if(v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,"$1.$2.$3-$4");
+  else if(v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/,"$1.$2.$3");
+  else if(v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/,"$1.$2");
+  e.target.value = v;
+});
+
+document.getElementById("cpfInput").addEventListener("keydown", function(e) {
+  if(e.key === "Enter") buscar();
+});
+
+function fmtCpf(c){ return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4"); }
+
+function getInitial(nome){ return nome ? nome.trim()[0].toUpperCase() : "?"; }
+
+function saveHistory(dados) {
+  let h = JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
+  h = h.filter(x => x.cpf !== dados.cpf).slice(0,9);
+  h.unshift({ cpf: dados.cpf, nome: dados.nome, time: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) });
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+  renderHistory();
+}
+
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
+  const sec = document.getElementById("historySection");
+  const list = document.getElementById("historyList");
+  if(!h.length){ sec.style.display="none"; return; }
+  sec.style.display="block";
+  list.innerHTML = h.map(x => `
+    <div class="hist-item" onclick="buscarCpf('${x.cpf}')">
+      <div>
+        <div class="hi-name">${x.nome}</div>
+        <div class="hi-cpf">${fmtCpf(x.cpf)}</div>
+      </div>
+      <div class="hi-time">${x.time}</div>
+    </div>
+  `).join("");
+}
+
+function showError(msg) {
+  const b = document.getElementById("errorBox");
+  b.textContent = msg;
+  b.classList.add("show");
+}
+function hideError(){ document.getElementById("errorBox").classList.remove("show"); }
+
+function showResult(d) {
+  hideError();
+  document.getElementById("loader").classList.remove("show");
+
+  const nome = d.nome || "Não encontrado";
+  document.getElementById("avatar").textContent   = getInitial(nome);
+  document.getElementById("rNome").textContent     = nome;
+  document.getElementById("rCpf").textContent      = fmtCpf(d.cpf);
+  document.getElementById("rNasc").textContent     = d.data_nascimento || "—";
+  document.getElementById("rSexo").textContent     = d.sexo === "M" ? "Masculino" : d.sexo === "F" ? "Feminino" : "—";
+  document.getElementById("rUf").textContent       = d.uf || "—";
+  document.getElementById("rMae").textContent      = d.nome_mae || "—";
+  document.getElementById("rSituacao").textContent = d.situacao_cadastral || "Regular";
+
+  const st = document.getElementById("rStatus");
+  const regular = (d.situacao_cadastral||"").toLowerCase().includes("regular") || !d.situacao_cadastral;
+  st.textContent = d.situacao_cadastral || "Regular";
+  st.className   = "status-badge " + (regular ? "regular" : "irregular");
+
+  document.getElementById("result").classList.add("show");
+  saveHistory(d);
+}
+
+async function buscarCpf(cpf) {
+  document.getElementById("cpfInput").value = fmtCpf(cpf);
+  await buscar();
+}
+
+async function buscar() {
+  hideError();
+  const raw = document.getElementById("cpfInput").value.replace(/\D/g,"");
+  if(raw.length !== 11) { showError("Informe um CPF válido com 11 dígitos."); return; }
+
+  const btn = document.getElementById("btnBuscar");
+  btn.disabled = true;
+  document.getElementById("result").classList.remove("show");
+  document.getElementById("loader").classList.add("show");
+
+  try {
+    const resp = await fetch(`/api/consulta.php?cpf=${raw}`);
+    const json = await resp.json();
+    const d    = json?.DADOS;
+    if(!d) throw new Error("Sem dados retornados");
+    showResult(d);
+  } catch(e) {
+    document.getElementById("loader").classList.remove("show");
+    showError("Erro ao consultar. Tente novamente em instantes.");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+renderHistory();
+</script>
+</body>
+</html>
